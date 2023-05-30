@@ -50,7 +50,7 @@ export class picture extends plugin {
     const encoder = new GIFEncoder(width, height)
 
     mkdirSync(imgDir, { recursive: true })
-    encoder.createReadStream().pipe(createWriteStream(join(imgDir, '旋转.gif')))
+    const file = encoder.createReadStream().pipe(createWriteStream(join(imgDir, '旋转.gif')))
     encoder.start()
     encoder.setRepeat(0)
     encoder.setDelay(50)
@@ -68,7 +68,10 @@ export class picture extends plugin {
       encoder.addFrame(ctx)
     }
     encoder.finish()
-    return e.sendImage(join(imgDir, '旋转.gif'))
+
+    return file.on('finish', async () => {
+      return e.sendImage(join(imgDir, '旋转.gif')).catch(err => err)
+    })
   }
 
   async 对称(e: Messagetype) {
@@ -209,7 +212,7 @@ export class picture extends plugin {
     const stream = canvas.createJPEGStream()
 
     stream.pipe(out)
-    out.on('finish', () => {
+    return out.on('finish', () => {
       return e.sendImage(imgPath)
     })
   }
