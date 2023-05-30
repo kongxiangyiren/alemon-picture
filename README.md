@@ -1,0 +1,31 @@
+# <div align="center">Alemon-TS 插件</div>
+
+根据发送的图片或回复信息的图片生成图片
+
+## 前置要求
+
+1、在 Alemon 项目根目录创建 `.npmrc`
+
+```npm
+canvas_binary_host_mirror=https://ghproxy.com/https://github.com/Automattic/node-canvas/releases/download/
+```
+
+2、 安装依赖
+
+```sh
+npm i canvas gifencoder
+```
+
+```sh
+npm i @types/gifencoder -D
+```
+
+## 命令
+
+| 命令    | 说明           |
+| ------- | -------------- |
+| /旋转   | 生成旋转的图片 |
+| /左对称 | 生成左对称图片 |
+| /右对称 | 生成右对称图片 |
+| /上对称 | 生成上对称图片 |
+| /下对称 | 生成下对称图片 |
