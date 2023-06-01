@@ -9,8 +9,17 @@
 ```npm
 canvas_binary_host_mirror=https://ghproxy.com/https://github.com/Automattic/node-canvas/releases/download/
 ```
+2、如果是linux
 
-2、 安装依赖
+解决 version `CXXABI_1.3.9‘ not found (required by /home/报错问题
+
+https://blog.csdn.net/weixin_39643007/article/details/120533472
+
+解决 “/lib64/libc.so.6: version `GLIBC_2.18‘ not found (required by /lib64/libstdc++.so.6)
+
+https://blog.csdn.net/weixin_39643007/article/details/120527897
+
+3、 安装依赖
 
 ```sh
 npm i canvas gifencoder
