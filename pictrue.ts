@@ -219,9 +219,8 @@ export class picture extends plugin {
 }
 // 获取图片
 async function getImg(e: Messagetype) {
-  // 修改eventType
-  e.eventType = e.eventId.split(':')[0]
-  if (e.eventType !== 'MESSAGE_CREATE' && e.eventType !== 'AT_MESSAGE_CREATE') {
+  const eventType = e.eventId.split(':')[0]
+  if (eventType !== 'MESSAGE_CREATE' && eventType !== 'AT_MESSAGE_CREATE') {
     await e.reply('请在子频道发送')
     return false
   }
