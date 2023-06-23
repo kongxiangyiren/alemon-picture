@@ -9,7 +9,8 @@
 ```npm
 canvas_binary_host_mirror=https://ghproxy.com/https://github.com/Automattic/node-canvas/releases/download/
 ```
-2、如果是linux
+
+2、如果是 linux
 
 解决 version `CXXABI_1.3.9‘ not found (required by /home/报错问题
 
@@ -22,7 +23,11 @@ https://blog.csdn.net/weixin_39643007/article/details/120527897
 3、 安装依赖
 
 ```sh
-npm i canvas gifencoder
+npm i canvas
+```
+
+```sh
+npm i gifencoder gif-frames
 ```
 
 ```sh
@@ -38,3 +43,5 @@ npm i @types/gifencoder -D
 | /右对称 | 生成右对称图片 |
 | /上对称 | 生成上对称图片 |
 | /下对称 | 生成下对称图片 |
+| /去色   | 生成去色图片   |
+| /线稿   | 生成线稿图片   |
