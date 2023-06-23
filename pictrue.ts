@@ -2,7 +2,9 @@ import { plugin, Messagetype } from 'alemon'
 import { createCanvas, loadImage } from 'canvas'
 import GIFEncoder from 'gifencoder'
 import { createWriteStream, mkdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import axios from 'axios'
+import GifFrames from 'gif-frames'
 
 const imgDir = join(process.cwd(), '/data/pucture')
 export class picture extends plugin {
@@ -28,6 +30,14 @@ export class picture extends plugin {
         {
           reg: '^/下对称$',
           fnc: '对称'
+        },
+        {
+          reg: '^/去色$',
+          fnc: '去色'
+        },
+        {
+          reg: '^/线稿$',
+          fnc: '去色'
         }
       ]
     })
@@ -216,24 +226,133 @@ export class picture extends plugin {
       return e.sendImage(imgPath)
     })
   }
+
+  async 去色(e: Messagetype) {
+    const img = await getImg(e)
+    if (!img) {
+      return
+    }
+
+    const res = await axios.get(img, { responseType: 'arraybuffer' })。catch(err => err)
+    if (!res) {
+      return
+    }
+
+    // 获取图片类型
+    const type = res.headers['content-type']
+    if (type === 'image/gif') {
+      const inputFilePath = res.data
+      const outputFilePath =
+        e.cmd_msg === '/去色' ? join(imgDir, './去色.gif') : join(imgDir, './线稿.gif')
+
+      const gifFrames = await GifFrames({ url: inputFilePath, frames: 'all' })
+      const encoder = new GIFEncoder(gifFrames[0]。frameInfo。width, gifFrames[0]。frameInfo。height)
+      const canvas = createCanvas(gifFrames[0]。frameInfo。width, gifFrames[0]。frameInfo。height)
+      const ctx = canvas.getContext('2d')
+      mkdirSync(dirname(outputFilePath)， { recursive: true })
+      const file = encoder.createReadStream()。pipe(createWriteStream(outputFilePath))
+
+      encoder.start()
+      encoder.setRepeat(0)
+      encoder.setDelay(100)
+      encoder.setQuality(10)
+
+      for (const frame of gifFrames) {
+        ctx.drawImage(await loadImage(frame.getImage()。_obj)， 0， 0)
+
+        const imageData = ctx.getImageData(0， 0, canvas.width, canvas.height)
+        const pixels = imageData.data
+
+        for (let i = 0; i < pixels.length; i += 4) {
+          const r = pixels[i]
+          const g = pixels[i + 1]
+          const b = pixels[i + 2]
+
+          if (e.cmd_msg === '/去色') {
+            const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+            pixels[i] = gray
+            pixels[i + 1] = gray
+            pixels[i + 2] = gray
+          } else {
+            const gray = 0.299 * r + 0.587 * g + 0.114 * b // 灰度值
+            const bw = gray > 128 ? 255 : 0 // 黑白值
+            pixels[i] = pixels[i + 1] = pixels[i + 2] = bw // 设置像素值
+          }
+        }
+
+        ctx.putImageData(imageData, 0， 0)
+        //@ts-ignore
+        encoder.addFrame(ctx)
+      }
+      encoder.finish()
+
+      return file.于('finish'， async () => {
+        return e
+          。sendImage(
+            e.cmd_msg === '/去色' ? join(imgDir, './去色.gif') : join(imgDir, './线稿.gif')
+          )
+          。catch(err => err)
+      })
+    } else {
+      // 加载图片
+      const image = await loadImage(encodeURI(img))
+      // 创建画布
+      const canvas = createCanvas(image.width, image.height)
+      const ctx = canvas.getContext('2d')
+
+      // 将图片绘制到画布上
+      ctx.drawImage(image, 0， 0)
+
+      // 获取画布上每个像素的颜色值
+      const imageData = ctx.getImageData(0， 0, canvas.width, canvas.height)
+      const pixels = imageData.data
+
+      // 遍历每个像素，将其颜色值设置为灰度值
+      for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i]
+        const g = pixels[i + 1]
+        const b = pixels[i + 2]
+        if (e.cmd_msg === '/去色') {
+          const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+          pixels[i] = gray
+          pixels[i + 1] = gray
+          pixels[i + 2] = gray
+        } else {
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b // 灰度值
+          const bw = gray > 128 ? 255 : 0 // 黑白值
+          pixels[i] = pixels[i + 1] = pixels[i + 2] = bw // 设置像素值
+        }
+      }
+
+      // 将处理后的像素数据重新绘制到画布上
+      ctx.putImageData(imageData, 0， 0)
+
+      // 将画布转换为Buffer对象
+      const buffer = canvas.toBuffer()
+
+      return e.postImage(buffer)
+    }
+  }
 }
 // 获取图片
 async function getImg(e: Messagetype) {
-  const eventType = e.eventId.split(':')[0]
+  const eventType = e.eventId。split(':')[0]
   if (eventType !== 'MESSAGE_CREATE' && eventType !== 'AT_MESSAGE_CREATE') {
     await e.reply('请在子频道发送')
     return false
   }
 
-  if (e.msg.attachments) {
-    return 'https://' + e.msg.attachments[0].url
-  } else if (e.msg.message_reference && e.msg.message_reference.message_id) {
-    let { data } = await client.messageApi.message(
-      e.msg.channel_id,
-      e.msg.message_reference.message_id
+  if (e.msg。attachments) {
+    return 'https://' + e.msg。attachments[0]。url
+  } else if (e.msg。message_reference && e.msg。message_reference。message_id) {
+    let { data } = await client.messageApi。message(
+      e.msg。channel_id，
+      e.msg。message_reference。message_id
     )
-    if (data && data.message && data.message.attachments) {
-      return 'https://' + data.message.attachments[0].url
+    if (data && data.message && data.message。attachments) {
+      return 'https://' + data.message。attachments[0]。url
     } else {
       await e.reply('回复信息没有获取到图片')
       return false
